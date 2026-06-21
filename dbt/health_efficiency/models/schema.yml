@@ -1,0 +1,82 @@
+version: 2
+
+models:
+  - name: stg_worldbank_health
+    description: "Cleaned long-format World Bank health indicators."
+    columns:
+      - name: country_code
+        tests:
+          - not_null
+      - name: indicator_code
+        tests:
+          - not_null
+      - name: year
+        tests:
+          - not_null
+      - name: value
+        description: "Indicator value. Can be null when World Bank has no value for that country/year."
+
+  - name: stg_worldbank_countries
+    description: "Cleaned country metadata."
+    columns:
+      - name: country_code
+        tests:
+          - not_null
+          - unique
+
+  - name: int_health_indicators_pivoted
+    description: "One row per country and year, with selected indicators pivoted into columns."
+    columns:
+      - name: country_code
+        tests:
+          - not_null
+      - name: year
+        tests:
+          - not_null
+
+  - name: dim_country
+    description: "Country dimension with region and income group."
+    columns:
+      - name: country_code
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_indicator
+    description: "Indicator dimension with category, unit and analytical polarity."
+    columns:
+      - name: indicator_code
+        tests:
+          - not_null
+          - unique
+      - name: polarity
+        tests:
+          - accepted_values:
+              values: ['higher_is_better', 'lower_is_better', 'context', 'cost']
+
+  - name: fct_health_indicators
+    description: "Fact table in long format for flexible analysis."
+    columns:
+      - name: country_code
+        tests:
+          - not_null
+      - name: indicator_code
+        tests:
+          - not_null
+      - name: year
+        tests:
+          - not_null
+
+  - name: mart_country_health_efficiency
+    description: "Final wide analytical table for Power BI. Includes exploratory efficiency metrics."
+    columns:
+      - name: country_code
+        tests:
+          - not_null
+      - name: year
+        tests:
+          - not_null
+      - name: simple_efficiency_life_per_usd
+        description: "Exploratory metric: life expectancy divided by health expenditure per capita."
+      - name: exploratory_efficiency_score
+        description: "Exploratory normalized score by year. Higher score means better outcomes with lower relative spending, but it is not a scientific efficiency metric."

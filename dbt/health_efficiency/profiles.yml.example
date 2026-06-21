@@ -1,0 +1,14 @@
+health_efficiency:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      user: postgres
+      password: postgres
+      port: 5432
+      dbname: health_efficiency
+      schema: analytics
+      threads: 4
+      keepalives_idle: 0
+      connect_timeout: 10

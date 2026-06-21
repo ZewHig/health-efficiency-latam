@@ -1,0 +1,27 @@
+version: 2
+
+sources:
+  - name: raw
+    database: health_efficiency
+    schema: raw
+    description: "Raw data extracted from the World Bank Indicators API."
+    tables:
+      - name: raw_worldbank_indicators
+        description: "Long-format health indicator observations by country, indicator, and year."
+        columns:
+          - name: country_code
+            tests:
+              - not_null
+          - name: indicator_code
+            tests:
+              - not_null
+          - name: year
+            tests:
+              - not_null
+      - name: raw_worldbank_countries
+        description: "Country metadata from the World Bank Country API."
+        columns:
+          - name: country_code
+            tests:
+              - not_null
+              - unique
