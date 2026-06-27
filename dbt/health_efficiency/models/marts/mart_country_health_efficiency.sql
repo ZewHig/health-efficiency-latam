@@ -14,6 +14,21 @@ WITH base AS (
         p.life_expectancy_years,
         p.infant_mortality_per_1000,
         p.premature_ncd_mortality_pct,
+        p.population_total,
+        p.population_total / 1000000.0 AS population_millions,
+
+        CASE
+            WHEN p.health_exp_pc_usd IS NOT NULL
+             AND p.population_total IS NOT NULL
+                THEN p.health_exp_pc_usd * p.population_total
+        END AS estimated_total_health_exp_usd,
+
+        CASE
+            WHEN p.health_exp_pc_usd IS NOT NULL
+             AND p.population_total IS NOT NULL
+                THEN (p.health_exp_pc_usd * p.population_total) / 1000000000.0
+        END AS estimated_total_health_exp_billion_usd,
+
         p.last_loaded_at
     FROM {{ ref('int_health_indicators_pivoted') }} p
     LEFT JOIN {{ ref('dim_country') }} c

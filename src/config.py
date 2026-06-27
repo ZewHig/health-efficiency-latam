@@ -82,6 +82,13 @@ INDICATORS: list[Indicator] = [
         unit="% probability between ages 30 and 70",
         polarity="lower_is_better",
     ),
+    Indicator(
+    code="SP.POP.TOTL",
+    name="Population, total",
+    category="context",
+    unit="people",
+    polarity="neutral",
+    ),
 ]
 
 DEFAULT_START_YEAR = int(os.getenv("START_YEAR", "2000"))

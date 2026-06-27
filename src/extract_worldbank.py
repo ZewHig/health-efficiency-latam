@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 import argparse
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,15 +17,46 @@ class WorldBankAPIError(RuntimeError):
     """Raised when the World Bank API returns an unexpected response."""
 
 
-def _get_json(session: requests.Session, url: str, params: dict[str, Any]) -> list[Any]:
-    response = session.get(url, params=params, timeout=30)
-    response.raise_for_status()
-    payload = response.json()
+def _get_json(
+    session: requests.Session,
+    url: str,
+    params: dict[str, Any],
+    max_retries: int = 3,
+) -> list[Any]:
+    """Request JSON from World Bank API with simple retry logic."""
+    last_error: Exception | None = None
 
-    if not isinstance(payload, list) or len(payload) < 2:
-        raise WorldBankAPIError(f"Unexpected response format from World Bank API: {payload}")
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = session.get(url, params=params, timeout=90)
 
-    return payload
+            if response.status_code == 400:
+                raise WorldBankAPIError(
+                    f"Bad request to World Bank API: {response.url}\n"
+                    f"Response: {response.text[:500]}"
+                )
+
+            response.raise_for_status()
+            payload = response.json()
+
+            if not isinstance(payload, list) or len(payload) < 2:
+                raise WorldBankAPIError(
+                    f"Unexpected response format from World Bank API: {payload}"
+                )
+
+            return payload
+
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as error:
+            last_error = error
+            print(f"World Bank API timeout/connection error. Attempt {attempt}/{max_retries}...")
+
+            if attempt < max_retries:
+                time.sleep(5 * attempt)
+
+    raise WorldBankAPIError(
+        f"Failed to request World Bank API after {max_retries} attempts. "
+        f"Last error: {last_error}"
+    )
 
 
 def fetch_indicator(
@@ -33,7 +65,7 @@ def fetch_indicator(
     countries: list[str],
     start_year: int,
     end_year: int,
-    per_page: int = 2000,
+    per_page: int = 500,
 ) -> pd.DataFrame:
     """Fetch one World Bank indicator for multiple countries and return normalized rows."""
     country_param = ";".join(countries)
@@ -51,7 +83,6 @@ def fetch_indicator(
                 "format": "json",
                 "per_page": per_page,
                 "page": page,
-                "date": f"{start_year}:{end_year}",
             },
         )
 
@@ -62,13 +93,15 @@ def fetch_indicator(
             country = record.get("country") or {}
             indicator = record.get("indicator") or {}
 
+            year = int(record["date"]) if record.get("date") else None
+
             rows.append(
                 {
                     "country_code": record.get("countryiso3code"),
                     "country_name": country.get("value"),
                     "indicator_code": indicator_code,
                     "indicator_name": indicator.get("value"),
-                    "year": int(record["date"]) if record.get("date") else None,
+                    "year": year,
                     "value": record.get("value"),
                     "loaded_at": loaded_at,
                 }
@@ -77,9 +110,20 @@ def fetch_indicator(
         total_pages = int(metadata.get("pages", 1))
         if page >= total_pages:
             break
+
         page += 1
 
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+
+    if df.empty:
+        return df
+
+    df = df[
+        (df["year"] >= start_year)
+        & (df["year"] <= end_year)
+    ].reset_index(drop=True)
+
+    return df
 
 
 def fetch_countries_metadata(session: requests.Session, countries: list[str], per_page: int = 300) -> pd.DataFrame:

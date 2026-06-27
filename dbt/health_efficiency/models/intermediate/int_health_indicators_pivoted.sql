@@ -17,6 +17,7 @@ pivoted AS (
         MAX(CASE WHEN indicator_code = 'SP.DYN.LE00.IN' THEN value END) AS life_expectancy_years,
         MAX(CASE WHEN indicator_code = 'SP.DYN.IMRT.IN' THEN value END) AS infant_mortality_per_1000,
         MAX(CASE WHEN indicator_code = 'SH.DYN.NCOM.ZS' THEN value END) AS premature_ncd_mortality_pct,
+        MAX(CASE WHEN indicator_code = 'SP.POP.TOTL' THEN value END) AS population_total,
         MAX(loaded_at) AS last_loaded_at
     FROM base
     GROUP BY 1, 2, 3

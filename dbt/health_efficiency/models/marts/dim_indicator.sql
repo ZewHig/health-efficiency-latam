@@ -9,5 +9,6 @@ FROM (
         ('SH.MED.PHYS.ZS', 'Physicians per 1,000 people', 'infrastructure', 'per 1,000 people', 'context'),
         ('SP.DYN.LE00.IN', 'Life expectancy at birth', 'outcome', 'years', 'higher_is_better'),
         ('SP.DYN.IMRT.IN', 'Infant mortality rate', 'outcome', 'per 1,000 live births', 'lower_is_better'),
-        ('SH.DYN.NCOM.ZS', 'Premature mortality from noncommunicable diseases', 'outcome', '% probability between ages 30 and 70', 'lower_is_better')
+        ('SH.DYN.NCOM.ZS', 'Premature mortality from noncommunicable diseases', 'outcome', '% probability between ages 30 and 70', 'lower_is_better'),
+        ('SP.POP.TOTL', 'Population, total', 'context', 'people', 'context')
 ) AS indicators(indicator_code, indicator_name, category, unit, polarity)

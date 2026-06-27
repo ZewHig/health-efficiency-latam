@@ -46,13 +46,26 @@ models:
     description: "Indicator dimension with category, unit and analytical polarity."
     columns:
       - name: indicator_code
+        description: "World Bank indicator code."
         tests:
           - not_null
           - unique
+
+      - name: indicator_name
+        description: "World Bank indicator name."
+
+      - name: category
+        description: "Analytical category of the indicator."
+
+      - name: unit
+        description: "Measurement unit of the indicator."
+
       - name: polarity
+        description: "Indicates whether higher values, lower values, cost values or context values are analytically preferable."
         tests:
           - accepted_values:
-              values: ['higher_is_better', 'lower_is_better', 'context', 'cost']
+              arguments:
+                values: ['higher_is_better', 'lower_is_better', 'context', 'cost']
 
   - name: fct_health_indicators
     description: "Fact table in long format for flexible analysis."
@@ -80,3 +93,14 @@ models:
         description: "Exploratory metric: life expectancy divided by health expenditure per capita."
       - name: exploratory_efficiency_score
         description: "Exploratory normalized score by year. Higher score means better outcomes with lower relative spending, but it is not a scientific efficiency metric."
+      - name: population_total
+        description: "Total population."
+
+      - name: population_millions
+        description: "Total population in millions."
+
+      - name: estimated_total_health_exp_usd
+        description: "Estimated total health expenditure in current USD, calculated as health expenditure per capita multiplied by total population."
+
+      - name: estimated_total_health_exp_billion_usd
+        description: "Estimated total health expenditure in billions of current USD."

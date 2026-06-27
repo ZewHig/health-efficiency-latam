@@ -16,6 +16,30 @@ def run_sql_file(engine, sql_file: Path) -> None:
         connection.execute(text(sql))
 
 
+def prepare_dataframe_for_postgres(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Ajusta tipos lidos do CSV antes de carregar no PostgreSQL.
+    CSV não guarda tipos reais, então datas e números precisam ser convertidos.
+    """
+
+    if "year" in df.columns:
+        df["year"] = pd.to_numeric(df["year"], errors="coerce").astype("Int64")
+
+    if "value" in df.columns:
+        df["value"] = pd.to_numeric(df["value"], errors="coerce")
+
+    if "longitude" in df.columns:
+        df["longitude"] = pd.to_numeric(df["longitude"], errors="coerce")
+
+    if "latitude" in df.columns:
+        df["latitude"] = pd.to_numeric(df["latitude"], errors="coerce")
+
+    if "loaded_at" in df.columns:
+        df["loaded_at"] = pd.to_datetime(df["loaded_at"], errors="coerce", utc=True)
+
+    return df
+
+
 def load_csv_to_table(
     engine,
     csv_path: Path,
@@ -27,6 +51,7 @@ def load_csv_to_table(
         raise FileNotFoundError(f"File not found: {csv_path}")
 
     df = pd.read_csv(csv_path)
+    df = prepare_dataframe_for_postgres(df)
 
     with engine.begin() as connection:
         connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema}"))
